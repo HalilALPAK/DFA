@@ -1,0 +1,89 @@
+#include <stdio.h>
+#include <stdbool.h>
+#include <string.h>
+
+#define MAX_DURUMLAR 100
+#define MAX_ALFABE 10
+
+// DFA Yapısı
+int gecisTablosu[MAX_DURUMLAR][MAX_ALFABE];
+int kabulDurumlari[MAX_DURUMLAR];
+int durumSayisi, kabulDurumSayisi;
+char alfabe[MAX_ALFABE];
+int alfabeBoyutu;
+
+// Karakterin alfabedeki indeksini alır
+int alfabeIndeksiBul(char c) {
+    for (int i = 0; i < alfabeBoyutu; i++) {
+        if (alfabe[i] == c) return i;
+    }
+    return -1; // Geçersiz karakter
+}
+
+// Basit bir regex'i DFA'ya dönüştürme fonksiyonu (örnek: a*(a+b)*)
+void regexiDFADonustur(const char* regex) {
+    // Bu örnek için sadece a*(a+b)* desteklenir.
+    // Gelişmiş bir parser eklenebilir.
+    durumSayisi = 3; // 3 durum: başlangıç (0), ara (1), kabul (2)
+    alfabeBoyutu = 2; // Alfabe: {'a', 'b'}
+    alfabe[0] = 'a';
+    alfabe[1] = 'b';
+
+    // Geçiş tablosu
+    // Durum 0: 'a' ile 1'e, 'b' ile geçersiz (-1)
+    gecisTablosu[0][0] = 1;
+    gecisTablosu[0][1] = -1;
+
+    // Durum 1: 'a' ile kendine, 'b' ile 2'ye
+    gecisTablosu[1][0] = 1;
+    gecisTablosu[1][1] = 2;
+
+    // Durum 2: 'a' veya 'b' ile kendine
+    gecisTablosu[2][0] = 2;
+    gecisTablosu[2][1] = 2;
+
+    // Kabul durumları
+    kabulDurumSayisi = 1;
+    kabulDurumlari[0] = 2;
+}
+
+// DFA çalıştırma fonksiyonu
+bool DFAyiCalistir(const char* giris) {
+    int mevcutDurum = 0; // Başlangıç durumu
+
+    for (int i = 0; i < strlen(giris); i++) {
+        int indeks = alfabeIndeksiBul(giris[i]);
+        if (indeks == -1) return false; // Geçersiz karakter
+        mevcutDurum = gecisTablosu[mevcutDurum][indeks];
+        if (mevcutDurum == -1) return false; // Geçersiz geçiş
+    }
+
+    // Son durum kabul durumlarından biri mi?
+    for (int i = 0; i < kabulDurumSayisi; i++) {
+        if (mevcutDurum == kabulDurumlari[i]) return true;
+    }
+    return false;
+}
+
+int main() {
+    char regex[100];
+    char kelime[100];
+
+    printf("DFA'yi tanimlamak icin bir duzenli ifade girin (ornek: a*(a+b)*): ");
+    scanf("%s", regex);
+
+    // Regex'i DFA'ya dönüştür
+    regexiDFADonustur(regex);
+
+    // Kelime kontrolü
+    printf("Kontrol edilecek kelimeyi girin: ");
+    scanf("%s", kelime);
+
+    if (DFAyiCalistir(kelime)) {
+        printf("Kelime DFA'dan geciyor.\n");
+    } else {
+        printf("Kelime DFA'dan gecmiyor.\n");
+    }
+
+    return 0;
+}
